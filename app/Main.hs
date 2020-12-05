@@ -16,4 +16,12 @@ main =  do
     putStrLn ("Day 3 Part 1: " ++ (show . day3p1 3 1 . lines $ day3data))
     putStrLn ("Day 3 Part 2: " ++ (show . day3p2 [(1,1), (3,1), (5,1), (7,1), (1,2)] . lines $ day3data))
     
+    day4data <- readFile "res/day4.txt"
+    putStrLn ("Day 4 Part 1: " ++ (show . day4p1 $ day4data))
+    putStrLn ("Day 4 Part 2: " ++ (show . day4p2 $ day4data))
+    
+    day5data <- readFile "res/day5.txt"
+    putStrLn ("Day 5 Part 1: " ++ (show . day5p1 . lines $ day5data))
+    putStrLn ("Day 5 Part 2: " ++ (show . day5p2 . lines $ day5data))
+    
     putStrLn "tada!"
