@@ -9,6 +9,10 @@ module Lib
     , day4p2
     , day5p1
     , day5p2
+    , day5p2v2
+    , day6p1
+    , day6p1v2
+    , day6p2
     ) where
 
 import Data.Char
@@ -16,13 +20,13 @@ import Data.List
 import Data.List.Split
 import Text.Read
 
-day1p1 :: [Integer] -> String
+day1p1 :: [Int] -> String
 day1p1 ns = do
     let list = nub ns
     let table = [ (x+y, (x,y)) | x <- list, y <- (tail . dropWhile (/= x) $ list) ]
     maybe (error "heck (day 1p1.1)") (\(a,b) -> (show a) ++ "+" ++ (show b) ++ "= 2020, " ++ (show a) ++ "*" ++ (show b) ++ "=" ++ (show (a*b))) . lookup 2020 $ table
 
-day1p2 :: [Integer] -> String
+day1p2 :: [Int] -> String
 day1p2 ns = do
     let list = nub ns
     let table = [ (x+y+z, (x,y,z)) | x <- list, y <- (tail . dropWhile (/= x) $ list), z <- (tail . dropWhile (/= y) $ list) ]
@@ -70,3 +74,15 @@ day5p1 seatBins = maximum . map day5p1seatid $ seatBins
 
 day5p2 :: [String] -> Int
 day5p2 seatBins = (+1) . fst . head . filter (\(a,b) -> (b-a) /= 1) . (\list -> zip list $ tail list) . sort . map day5p1seatid $ seatBins
+
+day5p2v2 :: [String] -> Int
+day5p2v2 seatBins = head . (\ids -> filter (not . (`elem` ids)) ([(minimum ids)..])) . map day5p1seatid $ seatBins
+
+day6p1 :: String -> Int
+day6p1 answers = sum . map (length . nub . concat . words) . splitOn "\n\n" $ answers
+
+day6p1v2 :: String -> Int
+day6p1v2 answers = sum . map (length . (\l -> foldr union (head l) $ tail l) . lines) . splitOn "\n\n" $ answers
+
+day6p2 :: String -> Int
+day6p2 answers = sum . map (length . (\l -> foldr intersect (head l) $ tail l) . lines) . splitOn "\n\n" $ answers

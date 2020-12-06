@@ -22,6 +22,10 @@ main =  do
     
     day5data <- readFile "res/day5.txt"
     putStrLn ("Day 5 Part 1: " ++ (show . day5p1 . lines $ day5data))
-    putStrLn ("Day 5 Part 2: " ++ (show . day5p2 . lines $ day5data))
+    putStrLn ("Day 5 Part 2: " ++ (show . day5p2v2 . lines $ day5data))
     
+    day6data <- readFile "res/day6.txt"
+    putStrLn ("Day 6 Part 1: " ++ (show . day6p1 $ day6data))
+    putStrLn ("Day 6 Part 2: " ++ (show . day6p2 $ day6data))
+
     putStrLn "tada!"
