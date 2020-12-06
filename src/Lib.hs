@@ -82,7 +82,7 @@ day6p1 :: String -> Int
 day6p1 answers = sum . map (length . nub . concat . words) . splitOn "\n\n" $ answers
 
 day6p1v2 :: String -> Int
-day6p1v2 answers = sum . map (length . (\l -> foldr union (head l) $ tail l) . lines) . splitOn "\n\n" $ answers
+day6p1v2 answers = sum . map (length . foldr1 union . lines) . splitOn "\n\n" $ answers
 
 day6p2 :: String -> Int
-day6p2 answers = sum . map (length . (\l -> foldr intersect (head l) $ tail l) . lines) . splitOn "\n\n" $ answers
+day6p2 answers = sum . map (length . foldr1 intersect . lines) . splitOn "\n\n" $ answers
