@@ -154,15 +154,14 @@ day8p2toggle line instructions = (take line instructions) ++ ((toggle $ instruct
         toggle x = x
 
 day8p2instruct :: [(String, Int)] -> [Int] -> Int -> (Int, Bool)
-day8p2instruct instructions line acc = if (head line) `elem` (tail line)
-                                                    then (acc, False)
-                                                    else if head line == length instructions
-                                                        then (acc, True)
-                                                        else case instructions!!(head line) of
-                                                                ("acc", arg)  -> day8p2instruct instructions (((+1) . head $ line):line) (acc+arg)
-                                                                ("jmp", arg)  -> day8p2instruct instructions (((+arg) . head $ line):line) acc
-                                                                ("nop", _)    -> day8p2instruct instructions (((+1) . head $ line):line) acc
-                                                                _             -> error "invalid instruction"
+day8p2instruct instructions line acc
+    | (head line) ` elem` (tail line)   = (acc, False)
+    | head line == length instructions  = (acc, True)
+    | otherwise                         = case instructions!!(head line) of
+                                               ("acc", arg)  -> day8p2instruct instructions (((+1) . head $ line):line) (acc+arg)
+                                               ("jmp", arg)  -> day8p2instruct instructions (((+arg) . head $ line):line) acc
+                                               ("nop", _)    -> day8p2instruct instructions (((+1) . head $ line):line) acc
+                                               _             -> error "invalid instruction"
 
 day8p2 ::[String] -> [Int]
 day8p2 instructions = map fst . filter snd . map (\i -> day8p2instruct i [0] 0) . nub . (\i -> map (`day8p2toggle` i) [0..(length i - 1)]) $ map day8p1parse instructions
