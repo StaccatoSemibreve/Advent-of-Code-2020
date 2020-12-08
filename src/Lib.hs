@@ -13,10 +13,16 @@ module Lib
     , day6p1
     , day6p1v2
     , day6p2
+    , day7p1
+    , day7p2
+    , day8p1
+    , day8p2
     ) where
 
 import Data.Char
 import Data.List
+import Data.Function
+import Data.Maybe
 import Data.List.Split
 import Text.Read
 
@@ -86,3 +92,77 @@ day6p1v2 answers = sum . map (length . foldr1 union . lines) . splitOn "\n\n" $ 
 
 day6p2 :: String -> Int
 day6p2 answers = sum . map (length . foldr1 intersect . lines) . splitOn "\n\n" $ answers
+
+day7p1parse :: String -> (String, [(Int, String)])
+day7p1parse line = case splitOn " contain " line of
+                        [a, blist] -> case blist of
+                                           "no other bags." -> (a, [])
+                                           _ -> (maybe errorData id . stripSuffix " bags" $ a, map ((\(x:xs) -> (maybe (error $ "oh no " ++ (show (x:xs))) id . readMaybe $ x, intercalate " " xs)) . splitOn " ") . map (maybe errorData id . stripSuffixes [" bag", " bags"]) . splitOn ", " . init $ blist)
+                        _ -> errorData
+    where
+        errorData = error $ "improperly formatted data: " ++ line
+        
+        stripSuffix :: Eq a => [a] -> [a] -> Maybe [a]
+        stripSuffix suffix list = fmap reverse . (stripPrefix `on` reverse) suffix $ list
+        
+        stripSuffixes :: Eq a => [[a]] -> [a] -> Maybe [a]
+        stripSuffixes suffixes list = case filter (not . isNothing) . fmap (`stripSuffix` list) $ suffixes of
+                                           []       -> Nothing
+                                           (a:_)    -> a
+
+day7p1validate :: String -> [(String, [(Int, String)])] -> [(String, Bool)]
+day7p1validate bag bagRules = map (bagElem bag bagRules) . map fst . filter (\rule -> (fst rule) /= bag) $ bagRules
+    where
+        bagElem :: String -> [(String, [(Int, String)])] -> String -> (String, Bool)
+        bagElem _ [] checkBag = (checkBag, False)
+        bagElem bag bagRules checkBag = do
+            let subbags = maybe [] (map snd) . lookup checkBag $ bagRules
+            if bag `elem` subbags
+               then (checkBag, True)
+               else (checkBag, or . map (snd . bagElem bag bagRules) $ subbags)
+
+day7p1 :: [String] -> Int
+day7p1 rules = length . filter snd . day7p1validate "shiny gold" . map day7p1parse $ rules
+
+day7p2count :: String -> [(String, [(Int, String)])] -> Int
+day7p2count bag bagRules = sum . map (\(count, subbag) -> (*count) . (+1) . day7p2count subbag $ bagRules) . maybe [] id . lookup bag $ bagRules
+
+day7p2 :: [String] -> Int
+day7p2 rules = day7p2count "shiny gold" . map day7p1parse $ rules
+
+day8p1instruct :: [(String, Int)] -> [Int] -> Int -> Int
+day8p1instruct instructions line acc = if or[(head line) `elem` (tail line), head line == length instructions]
+                                                    then acc
+                                                    else case instructions!!(head line) of
+                                                              ("acc", arg)  -> day8p1instruct instructions (((+1) . head $ line):line) (acc+arg)
+                                                              ("jmp", arg)  -> day8p1instruct instructions (((+arg) . head $ line):line) acc
+                                                              ("nop", _)    -> day8p1instruct instructions (((+1) . head $ line):line) acc
+                                                              _             -> error "invalid instruction"
+
+day8p1parse :: String -> (String, Int)
+day8p1parse = (\[a,b] -> (a, maybe (maybe 0 id . readMaybe . tail $ b) id . readMaybe $ b)) . words
+
+day8p1 :: [String] -> Int
+day8p1 instructions = day8p1instruct (map day8p1parse instructions) [0] 0
+
+day8p2toggle :: Int -> [(String, Int)] -> [(String, Int)]
+day8p2toggle line instructions = (take line instructions) ++ ((toggle $ instructions!!line):(drop (line+1) instructions))
+    where
+        toggle :: (String, Int) -> (String, Int)
+        toggle ("jmp", arg) = ("nop", arg)
+        toggle ("nop", arg) = ("jmp", arg)
+        toggle x = x
+
+day8p2instruct :: [(String, Int)] -> [Int] -> Int -> (Int, Bool)
+day8p2instruct instructions line acc = if (head line) `elem` (tail line)
+                                                    then (acc, False)
+                                                    else if head line == length instructions
+                                                        then (acc, True)
+                                                        else case instructions!!(head line) of
+                                                                ("acc", arg)  -> day8p2instruct instructions (((+1) . head $ line):line) (acc+arg)
+                                                                ("jmp", arg)  -> day8p2instruct instructions (((+arg) . head $ line):line) acc
+                                                                ("nop", _)    -> day8p2instruct instructions (((+1) . head $ line):line) acc
+                                                                _             -> error "invalid instruction"
+
+day8p2 ::[String] -> [Int]
+day8p2 instructions = map fst . filter snd . map (\i -> day8p2instruct i [0] 0) . nub . (\i -> map (`day8p2toggle` i) [0..(length i - 1)]) $ map day8p1parse instructions
