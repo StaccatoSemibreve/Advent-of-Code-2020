@@ -130,20 +130,21 @@ day7p2count bag bagRules = sum . map (\(count, subbag) -> (*count) . (+1) . day7
 day7p2 :: [String] -> Int
 day7p2 rules = day7p2count "shiny gold" . map day7p1parse $ rules
 
-day8p1instruct :: [(String, Int)] -> [Int] -> Int -> Int
-day8p1instruct instructions line acc = if or[(head line) `elem` (tail line), head line == length instructions]
-                                                    then acc
-                                                    else case instructions!!(head line) of
-                                                              ("acc", arg)  -> day8p1instruct instructions (((+1) . head $ line):line) (acc+arg)
-                                                              ("jmp", arg)  -> day8p1instruct instructions (((+arg) . head $ line):line) acc
-                                                              ("nop", _)    -> day8p1instruct instructions (((+1) . head $ line):line) acc
-                                                              _             -> error "invalid instruction"
+day8p1instruct :: [(String, Int)] -> [Int] -> Int -> (Int, Bool)
+day8p1instruct instructions line acc
+    | (head line) ` elem` (tail line)   = (acc, False)
+    | head line == length instructions  = (acc, True)
+    | otherwise                         = case instructions!!(head line) of
+                                               ("acc", arg)  -> day8p1instruct instructions (((+1) . head $ line):line) (acc+arg)
+                                               ("jmp", arg)  -> day8p1instruct instructions (((+arg) . head $ line):line) acc
+                                               ("nop", _)    -> day8p1instruct instructions (((+1) . head $ line):line) acc
+                                               _             -> error "invalid instruction"
 
 day8p1parse :: String -> (String, Int)
 day8p1parse = (\[a,b] -> (a, maybe (maybe 0 id . readMaybe . tail $ b) id . readMaybe $ b)) . words
 
 day8p1 :: [String] -> Int
-day8p1 instructions = day8p1instruct (map day8p1parse instructions) [0] 0
+day8p1 instructions = fst . day8p1instruct (map day8p1parse instructions) [0] $ 0
 
 day8p2toggle :: Int -> [(String, Int)] -> [(String, Int)]
 day8p2toggle line instructions = (take line instructions) ++ ((toggle $ instructions!!line):(drop (line+1) instructions))
@@ -153,15 +154,5 @@ day8p2toggle line instructions = (take line instructions) ++ ((toggle $ instruct
         toggle ("nop", arg) = ("jmp", arg)
         toggle x = x
 
-day8p2instruct :: [(String, Int)] -> [Int] -> Int -> (Int, Bool)
-day8p2instruct instructions line acc
-    | (head line) ` elem` (tail line)   = (acc, False)
-    | head line == length instructions  = (acc, True)
-    | otherwise                         = case instructions!!(head line) of
-                                               ("acc", arg)  -> day8p2instruct instructions (((+1) . head $ line):line) (acc+arg)
-                                               ("jmp", arg)  -> day8p2instruct instructions (((+arg) . head $ line):line) acc
-                                               ("nop", _)    -> day8p2instruct instructions (((+1) . head $ line):line) acc
-                                               _             -> error "invalid instruction"
-
 day8p2 ::[String] -> [Int]
-day8p2 instructions = map fst . filter snd . map (\i -> day8p2instruct i [0] 0) . nub . (\i -> map (`day8p2toggle` i) [0..(length i - 1)]) $ map day8p1parse instructions
+day8p2 instructions = map fst . filter snd . map (\i -> day8p1instruct i [0] 0) . nub . (\i -> map (`day8p2toggle` i) [0..(length i - 1)]) $ map day8p1parse instructions
