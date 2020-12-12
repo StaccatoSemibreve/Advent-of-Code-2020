@@ -1,30 +1,26 @@
 module Lib
-    ( day1p1
-    , day1p2
-    , day2p1
-    , day2p2
-    , day3p1
-    , day3p2
-    , day4p1
-    , day4p2
-    , day5p1
-    , day5p2
-    , day5p2v2
-    , day6p1
-    , day6p1v2
-    , day6p2
-    , day7p1
-    , day7p2
-    , day8p1
-    , day8p2
+    ( day1p1, day1p2
+    , day2p1, day2p2
+    , day3p1, day3p2
+    , day4p1, day4p2
+    , day5p1, day5p2, day5p2v2
+    , day6p1, day6p1v2, day6p2
+    , day7p1, day7p2
+    , day8p1, day8p2
+    , day9p1, day9p2
+    , day10p1, day10p2, day10p2bruteforce
+    , day11p1, day11p2
     ) where
 
 import Data.Char
 import Data.List
 import Data.Function
 import Data.Maybe
+import Data.Ix
 import Data.List.Split
 import Text.Read
+import Data.Tree
+import qualified Data.Map as Map
 
 day1p1 :: [Int] -> String
 day1p1 ns = do
@@ -158,5 +154,98 @@ day8p2toggle line instructions = (take line instructions) ++ ((toggle $ (instruc
         toggle (Nop arg) = Jmp arg
         toggle x = x
 
-day8p2 ::[String] -> [Int]
+day8p2 :: [String] -> [Int]
 day8p2 instructions = map fst . filter snd . map (\i -> day8p1instruct i [0] 0) . nub . (\i -> map (`day8p2toggle` i) [0..(length i - 1)]) $ map read instructions
+
+day9p1zipper :: Int -> [a] -> [[a]]
+day9p1zipper n list = [ take (min n x) . drop (max 0 (x-n)) $ list | x <- [0..length list] ]
+
+day9p1 :: [Int] -> Int
+day9p1 instructions = fst . head . filter (\(x,ys) -> not $ x `elem` ys) . drop 25 . zip instructions . map (\list -> [ x+y | (x:ys) <- tails list, y <- ys ]) . day9p1zipper 25 $ instructions
+
+day9p2subsequences :: [Int] -> [[Int]]
+day9p2subsequences list = concat . map subsequencePart $ [2..length list]
+    where
+        subsequencePart :: Int -> [[Int]]
+        subsequencePart size = drop size . day9p1zipper size $ list
+
+day9p2 :: [Int] -> Int
+day9p2 instructions = (\xs -> (minimum xs) + (maximum xs)) . (\x -> head . dropWhile (\list -> sum list /= x) . day9p2subsequences $ instructions) . day9p1 $ instructions
+
+day10p1 :: [Int] -> Int
+day10p1 adapters = (\l -> (length . filter (== 1) $ l) * ((+1) . length . filter (== 3) $ l)) . (\l -> zipWith (-) (tail l) l) . sort $ 0:adapters
+
+day10p2tree :: [Int] -> Tree Int
+day10p2tree adapters = unfoldTree (\list -> (head list, filter (\l -> and[not . null $ l, (head l)-4 < head list]) . take 3 . tail . tails $ list)) $ (0 : sort adapters)
+
+day10p2bruteforce :: [Int] -> Int
+day10p2bruteforce adapters = foldTree (\_ counts -> if length counts == 0 then 1 else sum counts) . day10p2tree $ adapters
+
+day10p2count :: [Int] -> Int
+day10p2count [1,1,1,1] = 7
+day10p2count [1,1,1] = 4
+day10p2count [2,2] = 1
+day10p2count [_,_] = 2
+day10p2count [_] = 1
+day10p2count [] = 1
+
+day10p2 :: [Int] -> Int
+day10p2 adapters = product . map day10p2count . splitOn [3] . (\l -> zipWith (-) (tail l) l) . sort $ 0:adapters
+
+day11p1zipper :: [String] -> Map.Map (Int, Int) Char
+day11p1zipper seats = Map.fromAscList . zip (range ((0,0), (length seats - 1, (length . head $ seats) - 1))) . concat $ seats
+
+day11p1adjacents :: Map.Map (Int, Int) Char -> [[(Char, [Char])]]
+day11p1adjacents seats = map (map snd) . groupBy ((==) `on` fst) $ [ (fst coord, (seat, adjacents)) | ((coord, seat), adjacents) <- zip (Map.toList seats) . map (map (\coords -> fromMaybe '.' . Map.lookup coords $ seats)) . map (\coords -> filter (/= coords) . range $ ((fst coords - 1, snd coords - 1), (fst coords + 1, snd coords + 1))) . Map.keys $ seats ]
+
+day11p1iterateseat :: (Char, [Char]) -> Char
+day11p1iterateseat ('L',adj)
+    | null . filter (=='#') $ adj   = '#'
+    | otherwise                     = 'L'
+day11p1iterateseat ('#',adj)
+    | (4>) . length . filter (=='#') $ adj  = '#'
+    | otherwise                             = 'L'
+day11p1iterateseat (x,_) = x
+
+day11p1iterate :: [String] -> [String]
+day11p1iterate = map (map day11p1iterateseat) . day11p1adjacents . day11p1zipper
+
+converge :: (a -> a -> Bool) -> [a] -> a
+converge p (x:ys@(y:_))
+    | p x y     = y
+    | otherwise = converge p ys
+
+day11p1 :: [String] -> Int
+day11p1 seats = length . filter (=='#') . concat . converge (==) . iterate day11p1iterate $ seats
+
+day11p2visibleline :: (Int,Int) -> (Int,Int) -> [(Int,Int)]
+day11p2visibleline (x,y) (r,d) = [ (x+r*n,y+d*n) | n <- [1..] ]
+
+day11p2dirs :: [(Int,Int)]
+day11p2dirs = [(-1,0),(-1,-1),(0,-1),(1,-1),(1,0),(1,1),(0,1),(-1,1)]
+
+day11p2getfirstseat :: Map.Map (Int,Int) Char -> (Int,Int) -> (Int,Int) -> Char
+day11p2getfirstseat seats coords = case fromMaybe '.' . Map.lookup coords $ seats of
+                                        '.' -> const '.'
+                                        _ -> fromMaybe '.' . find (/= '.') . map (\c -> fromMaybe '?' . Map.lookup c $ seats) . day11p2visibleline coords
+
+day11p2getfirstseats :: Map.Map (Int,Int) Char -> (Int,Int) -> [Char]
+day11p2getfirstseats seats coords = map (day11p2getfirstseat seats coords) day11p2dirs
+
+day11p2adjacents :: Map.Map (Int, Int) Char -> [[(Char, [Char])]]
+day11p2adjacents seats = map (map snd) . groupBy ((==) `on` fst) $ [ (fst coord, (seat, adj)) | ((coord, seat), adj) <- zip (Map.toList seats) . map (day11p2getfirstseats seats) . Map.keys $ seats ]
+
+day11p2iterateseat :: (Char, [Char]) -> Char
+day11p2iterateseat ('L',adj)
+    | null . filter (=='#') $ adj   = '#'
+    | otherwise                     = 'L'
+day11p2iterateseat ('#',adj)
+    | (5>) . length . filter (=='#') $ adj  = '#'
+    | otherwise                             = 'L'
+day11p2iterateseat (x,_) = x
+
+day11p2iterate :: [String] -> [String]
+day11p2iterate = map (map day11p2iterateseat) . day11p2adjacents . day11p1zipper
+
+-- day11p2 :: [String] -> Int
+day11p2 seats = length . filter (=='#') . concat . converge (==) . iterate day11p2iterate $ seats

@@ -31,9 +31,21 @@ main =  do
 --     day7data <- readFile "res/day7.txt"
 --     putStrLn $ "Day 7 Part 1: " ++ (show . day7p1 . lines $ day7data)
 --     putStrLn $ "Day 7 Part 2: " ++ (show . day7p2 . lines $ day7data)
+--     
+--     day8data <- readFile "res/day8.txt"
+--     putStrLn $ "Day 8 Part 1: " ++ (show . day8p1 . lines $ day8data)
+--     putStrLn $ "Day 8 Part 2: " ++ (show . day8p2 . lines $ day8data)
+--     
+--     day9data <- readFile "res/day9.txt"
+--     putStrLn $ "Day 9 Part 1: " ++ (show . day9p1 . map read . lines $ day9data)
+--     putStrLn $ "Day 9 Part 2: " ++ (show . day9p2 . map read . lines $ day9data)
+--     
+--     day10data <- readFile "res/day10.txt"
+--     putStrLn $ "Day 10 Part 1: " ++ (show . day10p1 . map read . lines $ day10data)
+--     putStrLn $ "Day 10 Part 2: " ++ (show . day10p2 . map read . lines $ day10data)
     
-    day8data <- readFile "res/day8.txt"
-    putStrLn $ "Day 8 Part 1: " ++ (show . day8p1 . lines $ day8data)
-    putStrLn $ "Day 8 Part 2: " ++ (show . day8p2 . lines $ day8data)
+    day11data <- readFile "res/day11.txt"
+    putStrLn $ "Day 11 Part 1: " ++ (show . day11p1 . lines $ day11data)
+    putStrLn $ "Day 11 Part 2: " ++ (show . day11p2 . lines $ day11data)
     
     putStrLn "tada!"
