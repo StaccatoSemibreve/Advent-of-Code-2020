@@ -43,9 +43,13 @@ main =  do
 --     day10data <- readFile "res/day10.txt"
 --     putStrLn $ "Day 10 Part 1: " ++ (show . day10p1 . map read . lines $ day10data)
 --     putStrLn $ "Day 10 Part 2: " ++ (show . day10p2 . map read . lines $ day10data)
-    
-    day11data <- readFile "res/day11.txt"
-    putStrLn $ "Day 11 Part 1: " ++ (show . day11p1 . lines $ day11data)
-    putStrLn $ "Day 11 Part 2: " ++ (show . day11p2 . lines $ day11data)
+--     
+--     day11data <- readFile "res/day11.txt"
+--     putStrLn $ "Day 11 Part 1: " ++ (show . day11p1 . lines $ day11data)
+--     putStrLn $ "Day 11 Part 2: " ++ (show . day11p2 . lines $ day11data)
+--     
+    day12data <- readFile "res/day12.txt"
+    putStrLn $ "Day 12 Part 1: " ++ (show . day12p1 . lines $ day12data)
+    putStrLn $ "Day 12 Part 2: " ++ (show . day12p2 . lines $ day12data)
     
     putStrLn "tada!"

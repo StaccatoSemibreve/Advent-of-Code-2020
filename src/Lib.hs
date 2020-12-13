@@ -10,6 +10,7 @@ module Lib
     , day9p1, day9p2
     , day10p1, day10p2, day10p2bruteforce
     , day11p1, day11p2
+    , day12p1, day12p2
     ) where
 
 import Data.Char
@@ -247,5 +248,75 @@ day11p2iterateseat (x,_) = x
 day11p2iterate :: [String] -> [String]
 day11p2iterate = map (map day11p2iterateseat) . day11p2adjacents . day11p1zipper
 
--- day11p2 :: [String] -> Int
+day11p2 :: [String] -> Int
 day11p2 seats = length . filter (=='#') . concat . converge (==) . iterate day11p2iterate $ seats
+
+data Day12Direction = N | E | S | W
+    deriving (Eq, Show, Enum)
+
+data Day12Rotation = L Int | R Int
+    deriving (Eq, Show)
+
+data Day12Instruction = Card Day12Direction Int | Rot Day12Rotation | F Int
+    deriving (Eq, Show)
+instance Read Day12Instruction where
+    readsPrec _ input = do
+        let parts = lines input
+        [(parse . head $ parts, concat . tail $ parts)]
+        where
+            parse input = case splitAt 1 input of
+                               ("N", arg) -> Card N (fromMaybe (fromMaybe 0 . readMaybe . tail $ arg) . readMaybe $ arg)
+                               ("S", arg) -> Card S (fromMaybe (fromMaybe 0 . readMaybe . tail $ arg) . readMaybe $ arg)
+                               ("E", arg) -> Card E (fromMaybe (fromMaybe 0 . readMaybe . tail $ arg) . readMaybe $ arg)
+                               ("W", arg) -> Card W (fromMaybe (fromMaybe 0 . readMaybe . tail $ arg) . readMaybe $ arg)
+                               ("L", arg) -> Rot $ L (fromMaybe (fromMaybe 0 . readMaybe . tail $ arg) . readMaybe $ arg)
+                               ("R", arg) -> Rot $ R (fromMaybe (fromMaybe 0 . readMaybe . tail $ arg) . readMaybe $ arg)
+                               ("F", arg) -> F (fromMaybe (fromMaybe 0 . readMaybe . tail $ arg) . readMaybe $ arg)
+                               _          -> error "invalid instruction"
+
+data Day12State = Day12State Day12Direction (Int,Int)
+      deriving (Eq, Show)
+
+day12p1rotate :: Day12Rotation -> Day12Direction -> Day12Direction
+day12p1rotate (R 0) dir = dir
+day12p1rotate (R 90) W = N
+day12p1rotate (R 90) dir = succ dir
+day12p1rotate (R x) dir = (!!((x `mod` 360) `quot` 90)) . iterate (day12p1rotate (R 90)) $ dir
+day12p1rotate (L x) dir = day12p1rotate (R (360-x)) dir
+
+day12p1move :: Day12Instruction -> Day12State -> Day12State
+day12p1move (Card N d) (Day12State dir (x,y)) = Day12State dir (x,y+d)
+day12p1move (Card E d) (Day12State dir (x,y)) = Day12State dir (x+d,y)
+day12p1move (Card S d) (Day12State dir (x,y)) = Day12State dir (x,y-d)
+day12p1move (Card W d) (Day12State dir (x,y)) = Day12State dir (x-d,y)
+day12p1move (Rot r) (Day12State dir pos) = Day12State (day12p1rotate r dir) pos
+day12p1move (F d) s@(Day12State dir pos) = day12p1move (Card dir d) s
+
+day12p1manhattan :: Day12State -> Int
+day12p1manhattan (Day12State _ (x,y)) = ((+) `on` abs) x $ y
+
+day12p1 :: [String] -> Int
+day12p1 instrs = day12p1manhattan . foldr ($) (Day12State E (0,0)) . map (day12p1move . read) . reverse $ instrs
+
+data Day12Ship = Day12Ship (Int, Int) (Int, Int)
+      deriving (Eq, Show)
+
+day12p2rotate :: Day12Rotation -> (Int,Int) -> (Int,Int)
+day12p2rotate (R 0) dir = dir
+day12p2rotate (R 90) (x,y) = (y,-x)
+day12p2rotate (R x) dir = (!!((x `mod` 360) `quot` 90)) . iterate (day12p2rotate (R 90)) $ dir
+day12p2rotate (L x) dir = day12p2rotate (R (360-x)) dir
+
+day12p2move :: Day12Instruction -> Day12Ship -> Day12Ship
+day12p2move (Card N d) (Day12Ship (x,y) pos) = Day12Ship (x,y+d) pos
+day12p2move (Card E d) (Day12Ship (x,y) pos) = Day12Ship (x+d,y) pos
+day12p2move (Card S d) (Day12Ship (x,y) pos) = Day12Ship (x,y-d) pos
+day12p2move (Card W d) (Day12Ship (x,y) pos) = Day12Ship (x-d,y) pos
+day12p2move (Rot r) (Day12Ship wp pos) = Day12Ship (day12p2rotate r wp) pos
+day12p2move (F d) (Day12Ship wp@(dx,dy) (x,y)) = Day12Ship wp (x+d*dx, y+d*dy)
+
+day12p2manhattan :: Day12Ship -> Int
+day12p2manhattan (Day12Ship _ (x,y)) = ((+) `on` abs) x $ y
+
+day12p2 :: [String] -> Int
+day12p2 instrs = day12p2manhattan . foldr ($) (Day12Ship (10,1) (0,0)) . map (day12p2move . read) . reverse $ instrs
